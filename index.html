@@ -76,125 +76,94 @@
 <body class="bg-gray-50 text-ink h-screen w-screen overflow-hidden flex flex-col">
 
 <!-- ═══════════════════════════════════════════════════
-     DATI DELL'APP — MODIFICA QUI PER AGGIORNARE I CONTENUTI
+     DATI DELL'APP — CATEGORIE A FASCE DI PREZZO
      ═══════════════════════════════════════════════════ -->
 <script>
 // ┌─────────────────────────────────────────────────────┐
-// │  CATEGORIE — aggiungi/rimuovi/rinomina liberamente  │
+// │  CATEGORIE (Fasce di prezzo)                        │
 // └─────────────────────────────────────────────────────┘
+
 const CATEGORIE = [
-    {
-        id: "quotidiane",
-        nome: "Spese Quotidiane",
-        descrizione: "Caffè, pranzi, abbonamenti minori.",
-        emoji: "☕"
-    },
-    {
-        id: "vacanze",
-        nome: "Budget Vacanze",
-        descrizione: "Voli, hotel, cene fuori, souvenir.",
-        emoji: "✈️"
-    },
-    {
-        id: "grandi",
-        nome: "Grandi Acquisti",
-        descrizione: "Elettronica, auto, arredamento.",
-        emoji: "🛒"
-    },
-    {
-        id: "superflue",
-        nome: "Spese Superflue",
-        descrizione: "Vizi, acquisti d'impulso, lussi.",
-        emoji: "💸"
-    },
-    {
-        id: "casa",
-        nome: "Spese di Casa",
-        descrizione: "Affitto, bollette, manutenzione.",
-        emoji: "🏠"
-    },
-    {
-        id: "salute",
-        nome: "Salute & Benessere",
-        descrizione: "Palestra, farmaci, visite mediche.",
-        emoji: "🏃"
-    }
+    { id: "fascia_5",    nome: "0 - 5 €",    emoji: "🪙" },
+    { id: "fascia_50",   nome: "5 - 50 €",   emoji: "💵" },
+    { id: "fascia_200",  nome: "50 - 200 €", emoji: "💳" },
+    { id: "fascia_1000", nome: "200 - 1.000 €", emoji: "🛍️" },
+    { id: "fascia_max",  nome: "Oltre 1.000 €", emoji: "💎" }
 ];
 
 // ┌─────────────────────────────────────────────────────┐
-// │  SPESE — aggiungi nuove voci in ogni categoria      │
-// │  Formato: { id, nome, importo, categoria_id }       │
+// │  LISTA FACILITATA DELLE SPESE                       │
+// │  Aggiungi le voci tra "virgolette" divise da virgola│
 // └─────────────────────────────────────────────────────┘
-const SPESE = [
-    // ── QUOTIDIANE ──
-    { id: 1,  nome: "Un pacchetto di sigarette",         importo: 6.50,    categoria: "quotidiane" },
-    { id: 2,  nome: "Un kebab con patatine",             importo: 9.00,    categoria: "quotidiane" },
-    { id: 3,  nome: "Caffè al bar ogni giorno per un mese", importo: 45.00, categoria: "quotidiane" },
-    { id: 4,  nome: "Pranzo d'ufficio (panino + acqua)", importo: 8.50,    categoria: "quotidiane" },
-    { id: 5,  nome: "Abbonamento Netflix mensile",       importo: 17.99,   categoria: "quotidiane" },
-    { id: 6,  nome: "Abbonamento Spotify mensile",       importo: 10.99,   categoria: "quotidiane" },
-    { id: 7,  nome: "Birra artigianale al pub",          importo: 6.00,    categoria: "quotidiane" },
-    { id: 8,  nome: "Taxi in città (corsa media)",       importo: 14.00,   categoria: "quotidiane" },
-    { id: 9,  nome: "Giornale quotidiano cartaceo",      importo: 1.50,    categoria: "quotidiane" },
-    { id: 10, nome: "Bottiglia d'acqua al distributore", importo: 0.50,    categoria: "quotidiane" },
-    { id: 11, nome: "Aperitivo con amici",               importo: 12.00,   categoria: "quotidiane" },
-    { id: 12, nome: "Parcheggio in città (giornata)",    importo: 8.00,    categoria: "quotidiane" },
+const LISTE_SPESE = {
+    
+    "fascia_5": [
+        "Un caffè espresso", "Un cornetto o brioche", "Una bottiglietta d'acqua (0,5 L)", "Un trancio di pizza al taglio", 
+        "Una lattina di bibita", "Un pacchetto di gomme da masticare", "Un gelato artigianale (coppetta)", "Un pacchetto di patatine", 
+        "Una birra in bottiglia (supermercato)", "Un caffè al ginseng", "Un chilo di pasta", "Una bottiglia di passata di pomodoro", 
+        "Un filone di pane fresco", "Una scatola di biscotti", "Un litro di latte", "Un pezzo di parmigiano (piccolo)", 
+        "Due vasetti di yogurt", "Una tavoletta di cioccolato", "Un cespo di insalata fresca", "Una confezione da 6 uova", 
+        "Un flacone di bagnoschiuma", "Un tubetto di dentifricio", "Uno spazzolino da denti", "Una saponetta solida", 
+        "Un pacco scorta di fazzoletti", "Un deodorante spray", "Una maschera viso monouso", "Un burrocacao", 
+        "Una confezione di cotton fioc", "Un pacco di salviettine umidificate", "Una penna a sfera", "Un quaderno a spirale", 
+        "Un set matita e gomma", "Un evidenziatore", "Un blocchetto di post-it", "Una cartellina portadocumenti", 
+        "Un rotolo di nastro adesivo", "Una mini-spillatrice", "Una scatolina di graffette", "Un temperamatite", 
+        "Una confezione di spugne per piatti", "Un detersivo per piatti", "Un rotolo di carta assorbente", "Un rotolo di sacchetti per immondizia", 
+        "Un panno in microfibra", "Una candela profumata piccola", "Un deodorante per ambienti", "Un pacco di mollette per i panni", 
+        "Una confezione di fiammiferi", "Una bottiglia di candeggina", "Un mese di cloud base (50GB/100GB)", "Noleggio digitale di un film", 
+        "Acquisto di una canzone digitale", "Download di un'app a pagamento", "Commissione per un bonifico", "Stampa di 10 fotografie", 
+        "Un caffè sospeso (donazione)", "Abbonamento mensile news premium", "Attivazione di una SIM in promo", "Micro-transazione in un videogioco", 
+        "Un biglietto dell'autobus", "Un'ora di parcheggio (strisce blu)", "Sblocco di un monopattino in sharing", "Biglietto del treno (tratta breve)", 
+        "Due litri di benzina", "Pedaggio autostradale (tratta breve)", "Un gettone autolavaggio self-service", "Un profumatore per l'auto", 
+        "Canone mensile base del Telepass", "Una mappa cartacea della città", "Un paio di calzini in cotone", "Una confezione di forcine", 
+        "Un elastico per capelli (scrunchie)", "Un paio di lacci per scarpe", "Una borsa shopper in tela", "Delle solette semplici per scarpe", 
+        "Un pettine in plastica", "Una confezione di spille da balia", "Un pacco di guanti usa e getta", "Una toppa termoadesiva", 
+        "Una scatoletta di cibo per gatti/cani", "Un osso da masticare per cani", "Un tubetto di colla a presa rapida", "Una piantina grassa piccola", 
+        "Una bustina di semi da piantare", "Un cacciavite piccolo", "Una rivista in edicola", "Un quotidiano cartaceo", 
+        "Una confezione da 4 pile stilo", "Un mazzo di carte da gioco", "Un accendino", "Una scatola di caramelle in latta", 
+        "Una bustina di figurine", "Un Gratta e Vinci da 2 euro", "Un biglietto d'auguri in cartoncino", "L'affrancatura per una lettera", 
+        "Un laccio portachiavi da collo", "Una calamita da frigorifero", "Cartine e filtri per tabacco", "Un portachiavi ad anello semplice"
+    ],
 
-    // ── VACANZE ──
-    { id: 20, nome: "Volo low-cost andata e ritorno",    importo: 89.00,   categoria: "vacanze" },
-    { id: 21, nome: "Hotel 3 stelle per notte",          importo: 95.00,   categoria: "vacanze" },
-    { id: 22, nome: "Vacanze estive (1 settimana, 2 persone)", importo: 1400.00, categoria: "vacanze" },
-    { id: 23, nome: "Weekend a Parigi (volo+hotel)",     importo: 320.00,  categoria: "vacanze" },
-    { id: 24, nome: "Cena romantica in vacanza",         importo: 75.00,   categoria: "vacanze" },
-    { id: 25, nome: "Tour guidato in città straniera",   importo: 45.00,   categoria: "vacanze" },
-    { id: 26, nome: "Noleggio auto per una settimana",   importo: 280.00,  categoria: "vacanze" },
-    { id: 27, nome: "Assicurazione viaggio",             importo: 35.00,   categoria: "vacanze" },
-    { id: 28, nome: "Escursione di un giorno",           importo: 60.00,   categoria: "vacanze" },
+    "fascia_50": [
+        "Un pacchetto di sigarette", "Un kebab con patatine", "Abbonamento mensile a Netflix", "Abbonamento mensile a Spotify", 
+        "Una corsa media in taxi in città", "Un aperitivo con gli amici", "Un libro tascabile in libreria", 
+        "Acquisto in-app o microtransazione", "Taglio di capelli dal barbiere"
+    ],
 
-    // ── GRANDI ACQUISTI ──
-    { id: 40, nome: "Nuovo Smartphone top di gamma",     importo: 1199.00, categoria: "grandi" },
-    { id: 41, nome: "Laptop ultrabook 14\"",             importo: 1299.00, categoria: "grandi" },
-    { id: 42, nome: "Smart TV 55 pollici OLED",         importo: 899.00,  categoria: "grandi" },
-    { id: 43, nome: "Divano componibile",                importo: 1500.00, categoria: "grandi" },
-    { id: 44, nome: "Lavatrice di qualità",              importo: 650.00,  categoria: "grandi" },
-    { id: 45, nome: "Bici elettrica entry-level",        importo: 799.00,  categoria: "grandi" },
-    { id: 46, nome: "Macchina da caffè automatica",      importo: 420.00,  categoria: "grandi" },
-    { id: 47, nome: "Robot aspirapolvere",               importo: 350.00,  categoria: "grandi" },
-    { id: 48, nome: "Monopattino elettrico",             importo: 499.00,  categoria: "grandi" },
-    { id: 49, nome: "Fotocamera mirrorless entry",       importo: 750.00,  categoria: "grandi" },
+    "fascia_200": [
+        "Una cena al ristorante (2 persone)", "Un paio di scarpe da ginnastica", "Bolletta elettrica mensile", 
+        "Una visita medica specialistica", "Volo low-cost andata e ritorno", "Una notte in hotel 3 stelle", 
+        "Un profumo di marca", "Spesa alimentare settimanale"
+    ],
 
-    // ── SUPERFLUE ──
-    { id: 60, nome: "Gratta e Vinci ogni settimana (1 mese)", importo: 20.00, categoria: "superflue" },
-    { id: 61, nome: "Scarpe da ginnastica di marca",     importo: 180.00,  categoria: "superflue" },
-    { id: 62, nome: "Cena al ristorante stellato",       importo: 150.00,  categoria: "superflue" },
-    { id: 63, nome: "Videogame AAA al day-one",         importo: 79.99,   categoria: "superflue" },
-    { id: 64, nome: "Profumo di lusso",                  importo: 120.00,  categoria: "superflue" },
-    { id: 65, nome: "Abbonamento palestra non usata",    importo: 49.00,   categoria: "superflue" },
-    { id: 66, nome: "Acquisto in-app (gioco mobile)",    importo: 9.99,    categoria: "superflue" },
-    { id: 67, nome: "T-shirt firmata",                   importo: 95.00,   categoria: "superflue" },
-    { id: 68, nome: "Delivery food in più per settimana", importo: 35.00,  categoria: "superflue" },
+    "fascia_1000": [
+        "Un weekend in una capitale europea", "Smart TV da 55 pollici", "Una lavatrice di buona qualità", 
+        "Monopattino elettrico", "Abbonamento annuale in palestra", "Mantenere un'auto (spesa mensile)", 
+        "Noleggio auto per una settimana", "Occhiali da vista nuovi"
+    ],
 
-    // ── CASA ──
-    { id: 80, nome: "Affitto mensile (monolocale)",      importo: 750.00,  categoria: "casa" },
-    { id: 81, nome: "Affitto mensile (bilocale)",        importo: 1100.00, categoria: "casa" },
-    { id: 82, nome: "Bolletta elettrica mensile",        importo: 85.00,   categoria: "casa" },
-    { id: 83, nome: "Bolletta gas (riscaldamento)",      importo: 120.00,  categoria: "casa" },
-    { id: 84, nome: "Connessione internet (fibra)",      importo: 29.90,   categoria: "casa" },
-    { id: 85, nome: "Pulizie domestiche (2 volte/sett.)", importo: 180.00, categoria: "casa" },
-    { id: 86, nome: "Mantenere un'auto in città",        importo: 450.00,  categoria: "casa" },
-    { id: 87, nome: "Spesa alimentare settimanale",      importo: 110.00,  categoria: "casa" },
-    { id: 88, nome: "Condominio mensile",                importo: 95.00,   categoria: "casa" },
+    "fascia_max": [
+        "Smartphone di ultima generazione", "Laptop ultrabook per lavorare", "Vacanze estive (1 sett., 2 persone)", 
+        "Affitto mensile di un bilocale", "Un divano componibile di design", "PC da gaming assemblato"
+    ]
+};
 
-    // ── SALUTE ──
-    { id: 100, nome: "Abbonamento palestra annuale",     importo: 540.00,  categoria: "salute" },
-    { id: 101, nome: "Visita specialistica privata",     importo: 120.00,  categoria: "salute" },
-    { id: 102, nome: "Seduta dallo psicologo",           importo: 80.00,   categoria: "salute" },
-    { id: 103, nome: "Farmaci da banco (mese)",          importo: 30.00,   categoria: "salute" },
-    { id: 104, nome: "Integratori proteici (mese)",      importo: 45.00,   categoria: "salute" },
-    { id: 105, nome: "Seduta di fisioterapia",           importo: 60.00,   categoria: "salute" },
-    { id: 106, nome: "Occhiali da vista nuovi",          importo: 250.00,  categoria: "salute" },
-    { id: 107, nome: "App meditazione (annuale)",        importo: 79.99,   categoria: "salute" },
-];
+// ┌─────────────────────────────────────────────────────┐
+// │ AUTOMAZIONE: Converte le liste nel formato dell'app │
+// └─────────────────────────────────────────────────────┘
+let SPESE = [];
+let idCounter = 1;
+
+for (let fascia in LISTE_SPESE) {
+    LISTE_SPESE[fascia].forEach(nomeSpesa => {
+        SPESE.push({ 
+            id: idCounter++, 
+            nome: nomeSpesa, 
+            categoria: fascia 
+        });
+    });
+}
 </script>
 
 <!-- ═══════════════════════════════════════════════════
@@ -207,7 +176,7 @@ const SPESE = [
         <header class="mb-7">
             <p class="text-xs font-semibold uppercase tracking-widest text-teal mb-1">Budget Focus</p>
             <h1 class="font-display text-4xl text-ink leading-tight">Preferiresti?</span></h1>
-            <p class="text-gray-400 mt-2 text-sm">Scegli una categoria per iniziare il confronto.</p>
+            <p class="text-gray-400 mt-2 text-sm">Scegli una fascia di prezzo per iniziare il confronto.</p>
         </header>
         <div id="category-list" class="flex flex-col gap-3"></div>
     </section>
@@ -237,10 +206,9 @@ const SPESE = [
         <div class="card-wrap mb-3 w-full" id="card-a-wrap">
             <div class="card-inner relative">
                 <div class="card-front">
-                    <button id="btn-a" class="choice-btn w-full min-h-[130px] bg-teal rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
+                    <button id="btn-a" class="choice-btn w-full min-h-[140px] bg-teal rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
                         <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, white, transparent 60%)"></div>
                         <span id="name-a" class="text-xl font-semibold text-center leading-snug z-10"></span>
-                        <span id="price-a" class="text-sm font-mono opacity-70 mt-2 z-10"></span>
                         <button id="save-a" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors p-1.5 z-20">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
                         </button>
@@ -258,10 +226,9 @@ const SPESE = [
         <div class="card-wrap mt-3 w-full" id="card-b-wrap">
             <div class="card-inner relative">
                 <div class="card-front">
-                    <button id="btn-b" class="choice-btn w-full min-h-[130px] bg-teal-light rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
+                    <button id="btn-b" class="choice-btn w-full min-h-[140px] bg-teal-light rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
                         <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 20% 80%, white, transparent 60%)"></div>
                         <span id="name-b" class="text-xl font-semibold text-center leading-snug z-10"></span>
-                        <span id="price-b" class="text-sm font-mono opacity-70 mt-2 z-10"></span>
                         <button id="save-b" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors p-1.5 z-20">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
                         </button>
@@ -367,23 +334,13 @@ const SPESE = [
 
             <!-- Impostazioni -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                        <span class="text-sm font-medium text-ink">Mostra prezzi</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-prices" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal"></div>
-                    </label>
-                </div>
                 <button id="btn-reset" class="w-full px-5 py-4 flex items-center gap-3 hover:bg-red-50 transition-colors group">
                     <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     <span class="text-sm font-medium text-red-500">Azzera i miei dati</span>
                 </button>
             </div>
 
-            <p class="text-center text-[10px] text-gray-300 font-mono mt-2">Budget Focus • v0.2.0 Beta</p>
+            <p class="text-center text-[10px] text-gray-300 font-mono mt-2">Budget Focus • v0.3.0 Beta</p>
         </div>
     </section>
 
@@ -429,24 +386,22 @@ const SPESE = [
 <script>
 // ── Stato ──────────────────────────────────────────────
 const state = {
-    currentCat: null,        // categoria attiva nel gioco
-    pool: [],                // spese filtrate per categoria
-    usedPairs: new Set(),    // coppie già mostrate
+    currentCat: null,        
+    pool: [],                
+    usedPairs: new Set(),    
     currentA: null,
     currentB: null,
-    scores: {},              // { id: punteggio ELO }
-    saved: new Set(),        // id spese salvate
+    scores: {},              
+    saved: new Set(),        
     rounds: 0,
     streak: 0,
     rankCat: 'all',
-    showPrices: true,
     rankSearch: '',
     userId: '#' + Math.floor(1000 + Math.random() * 9000),
 };
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Carica dati da localStorage
     loadState();
 
     document.getElementById('user-id').textContent = 'ID: ' + state.userId;
@@ -467,11 +422,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('focus-btn-b').addEventListener('click', () => { choose('b'); closeFocusMode(); });
     document.getElementById('btn-feedback').addEventListener('click', sendFeedback);
     document.getElementById('btn-reset').addEventListener('click', resetData);
-    document.getElementById('toggle-prices').addEventListener('change', e => {
-        state.showPrices = e.target.checked;
-        renderCurrentPair();
-        saveState();
-    });
     document.getElementById('rank-search').addEventListener('input', e => {
         state.rankSearch = e.target.value.toLowerCase();
         updateRank();
@@ -551,7 +501,7 @@ function startGame(catId) {
 }
 
 function nextPair(counted) {
-    if (state.pool.length < 2) { showToast('Aggiungi più spese in questa categoria!'); return; }
+    if (state.pool.length < 2) { showToast('Aggiungi più spese in questa fascia!'); return; }
 
     // Estrazione casuale, evitando coppie già viste (finché possibile)
     let a, b, key;
@@ -586,8 +536,6 @@ function renderCurrentPair() {
 
     document.getElementById('name-a').textContent = a.nome;
     document.getElementById('name-b').textContent = b.nome;
-    document.getElementById('price-a').textContent = state.showPrices ? formatPrice(a.importo) : '';
-    document.getElementById('price-b').textContent = state.showPrices ? formatPrice(b.importo) : '';
 
     // Aggiorna icone salvataggio
     updateSaveIcon('save-a', a.id);
@@ -654,7 +602,7 @@ function updateRank() {
     container.innerHTML = '';
 
     if (items.length === 0) {
-        container.innerHTML = `<div class="text-center text-gray-300 text-sm mt-12">Nessuna spesa trovata.</div>`;
+        container.innerHTML = `<div class="text-center text-gray-300 text-sm mt-12">Nessuna voce trovata.</div>`;
         return;
     }
 
@@ -674,7 +622,7 @@ function updateRank() {
                 </button>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-ink leading-tight truncate">${item.nome}</p>
-                    <p class="text-[10px] text-gray-400 mt-0.5">${cat ? cat.emoji + ' ' + cat.nome : ''} · ${formatPrice(item.importo)}</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">${cat ? cat.emoji + ' Fascia ' + cat.nome : ''}</p>
                 </div>
                 <span class="font-mono text-xs font-bold text-teal ml-2">${score}</span>
             </div>
@@ -749,10 +697,6 @@ function navigateTo(screenId) {
 }
 
 // ── Helpers ────────────────────────────────────────────
-function formatPrice(n) {
-    return n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
-}
-
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -768,7 +712,7 @@ function updateProfileStats() {
     document.getElementById('stat-rounds').textContent = state.rounds;
     document.getElementById('stat-saved').textContent  = state.saved.size;
     document.getElementById('stat-streak').textContent = state.streak;
-    document.getElementById('saved-count').textContent = `${state.saved.size} spese nei preferiti`;
+    document.getElementById('saved-count').textContent = `${state.saved.size} voci nei preferiti`;
 }
 
 function sendFeedback() {
@@ -798,7 +742,6 @@ function saveState() {
         localStorage.setItem('bf_rounds',  state.rounds);
         localStorage.setItem('bf_streak',  state.streak);
         localStorage.setItem('bf_userid',  state.userId);
-        localStorage.setItem('bf_prices',  state.showPrices);
     } catch(e) {}
 }
 
@@ -809,11 +752,6 @@ function loadState() {
         const ro = localStorage.getItem('bf_rounds');  if (ro) state.rounds = parseInt(ro);
         const st = localStorage.getItem('bf_streak');  if (st) state.streak = parseInt(st);
         const ui = localStorage.getItem('bf_userid');  if (ui) state.userId = ui;
-        const pr = localStorage.getItem('bf_prices');
-        if (pr !== null) {
-            state.showPrices = pr === 'true';
-            document.getElementById('toggle-prices').checked = state.showPrices;
-        }
     } catch(e) {}
 }
 </script>
