@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Budget Focus</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: { DEFAULT: '#0f4c5c', light: '#1a6377', pale: '#e8f4f7' },
+                        ink: '#1a2332',
+                    },
+                    fontFamily: {
+                        display: ['"DM Serif Display"', 'serif'],
+                        sans: ['"DM Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --teal: #0f4c5c;
+            --teal-light: #1a6377;
+            --ink: #1a2332;
+        }
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'DM Sans', sans-serif; }
+        .hidden-screen { display: none !important; }
+        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+
+        /* Card flip animation */
+        .card-wrap { perspective: 1000px; }
+        .card-inner { transition: transform 0.5s cubic-bezier(.4,2,.6,1); transform-style: preserve-3d; }
+        .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .card-back { transform: rotateY(180deg); }
+
+        /* Choice buttons press effect */
+        .choice-btn { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+        .choice-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px -2px rgba(15,76,92,0.3); }
+
+        /* Slide transitions */
+        .screen-enter { animation: slideUp 0.3s cubic-bezier(.4,0,.2,1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Rank bar animation */
+        .rank-bar { transition: width 1s cubic-bezier(.4,0,.2,1); }
+
+        /* Nav active dot */
+        .nav-btn::after { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin: 2px auto 0; transition: background 0.2s; }
+        .nav-btn.active::after { background: var(--teal); }
+
+        /* Toast */
+        #toast { transition: all 0.3s ease; }
+
+        /* Segmented control */
+        .seg-active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: var(--ink); }
+        .seg-inactive { color: #9ca3af; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 0; }
+
+        /* Focus mode overlay */
+        #focus-overlay { background: rgba(15,76,92,0.96); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="bg-gray-50 text-ink h-screen w-screen overflow-hidden flex flex-col">
+
+<!-- ═══════════════════════════════════════════════════
+     DATI DELL'APP — MODIFICA QUI PER AGGIORNARE I CONTENUTI
+     ═══════════════════════════════════════════════════ -->
+<script>
+// ┌─────────────────────────────────────────────────────┐
+// │  CATEGORIE — aggiungi/rimuovi/rinomina liberamente  │
+// └─────────────────────────────────────────────────────┘
+const CATEGORIE = [
+    {
+        id: "quotidiane",
+        nome: "Spese Quotidiane",
+        descrizione: "Caffè, pranzi, abbonamenti minori.",
+        emoji: "☕"
+    },
+    {
+        id: "vacanze",
+        nome: "Budget Vacanze",
+        descrizione: "Voli, hotel, cene fuori, souvenir.",
+        emoji: "✈️"
+    },
+    {
+        id: "grandi",
+        nome: "Grandi Acquisti",
+        descrizione: "Elettronica, auto, arredamento.",
+        emoji: "🛒"
+    },
+    {
+        id: "superflue",
+        nome: "Spese Superflue",
+        descrizione: "Vizi, acquisti d'impulso, lussi.",
+        emoji: "💸"
+    },
+    {
+        id: "casa",
+        nome: "Spese di Casa",
+        descrizione: "Affitto, bollette, manutenzione.",
+        emoji: "🏠"
+    },
+    {
+        id: "salute",
+        nome: "Salute & Benessere",
+        descrizione: "Palestra, farmaci, visite mediche.",
+        emoji: "🏃"
+    }
+];
+
+// ┌─────────────────────────────────────────────────────┐
+// │  SPESE — aggiungi nuove voci in ogni categoria      │
+// │  Formato: { id, nome, importo, categoria_id }       │
+// └─────────────────────────────────────────────────────┘
+const SPESE = [
+    // ── QUOTIDIANE ──
+    { id: 1,  nome: "Un pacchetto di sigarette",         importo: 6.50,    categoria: "quotidiane" },
+    { id: 2,  nome: "Un kebab con patatine",             importo: 9.00,    categoria: "quotidiane" },
+    { id: 3,  nome: "Caffè al bar ogni giorno per un mese", importo: 45.00, categoria: "quotidiane" },
+    { id: 4,  nome: "Pranzo d'ufficio (panino + acqua)", importo: 8.50,    categoria: "quotidiane" },
+    { id: 5,  nome: "Abbonamento Netflix mensile",       importo: 17.99,   categoria: "quotidiane" },
+    { id: 6,  nome: "Abbonamento Spotify mensile",       importo: 10.99,   categoria: "quotidiane" },
+    { id: 7,  nome: "Birra artigianale al pub",          importo: 6.00,    categoria: "quotidiane" },
+    { id: 8,  nome: "Taxi in città (corsa media)",       importo: 14.00,   categoria: "quotidiane" },
+    { id: 9,  nome: "Giornale quotidiano cartaceo",      importo: 1.50,    categoria: "quotidiane" },
+    { id: 10, nome: "Bottiglia d'acqua al distributore", importo: 0.50,    categoria: "quotidiane" },
+    { id: 11, nome: "Aperitivo con amici",               importo: 12.00,   categoria: "quotidiane" },
+    { id: 12, nome: "Parcheggio in città (giornata)",    importo: 8.00,    categoria: "quotidiane" },
+
+    // ── VACANZE ──
+    { id: 20, nome: "Volo low-cost andata e ritorno",    importo: 89.00,   categoria: "vacanze" },
+    { id: 21, nome: "Hotel 3 stelle per notte",          importo: 95.00,   categoria: "vacanze" },
+    { id: 22, nome: "Vacanze estive (1 settimana, 2 persone)", importo: 1400.00, categoria: "vacanze" },
+    { id: 23, nome: "Weekend a Parigi (volo+hotel)",     importo: 320.00,  categoria: "vacanze" },
+    { id: 24, nome: "Cena romantica in vacanza",         importo: 75.00,   categoria: "vacanze" },
+    { id: 25, nome: "Tour guidato in città straniera",   importo: 45.00,   categoria: "vacanze" },
+    { id: 26, nome: "Noleggio auto per una settimana",   importo: 280.00,  categoria: "vacanze" },
+    { id: 27, nome: "Assicurazione viaggio",             importo: 35.00,   categoria: "vacanze" },
+    { id: 28, nome: "Escursione di un giorno",           importo: 60.00,   categoria: "vacanze" },
+
+    // ── GRANDI ACQUISTI ──
+    { id: 40, nome: "Nuovo Smartphone top di gamma",     importo: 1199.00, categoria: "grandi" },
+    { id: 41, nome: "Laptop ultrabook 14\"",             importo: 1299.00, categoria: "grandi" },
+    { id: 42, nome: "Smart TV 55 pollici OLED",         importo: 899.00,  categoria: "grandi" },
+    { id: 43, nome: "Divano componibile",                importo: 1500.00, categoria: "grandi" },
+    { id: 44, nome: "Lavatrice di qualità",              importo: 650.00,  categoria: "grandi" },
+    { id: 45, nome: "Bici elettrica entry-level",        importo: 799.00,  categoria: "grandi" },
+    { id: 46, nome: "Macchina da caffè automatica",      importo: 420.00,  categoria: "grandi" },
+    { id: 47, nome: "Robot aspirapolvere",               importo: 350.00,  categoria: "grandi" },
+    { id: 48, nome: "Monopattino elettrico",             importo: 499.00,  categoria: "grandi" },
+    { id: 49, nome: "Fotocamera mirrorless entry",       importo: 750.00,  categoria: "grandi" },
+
+    // ── SUPERFLUE ──
+    { id: 60, nome: "Gratta e Vinci ogni settimana (1 mese)", importo: 20.00, categoria: "superflue" },
+    { id: 61, nome: "Scarpe da ginnastica di marca",     importo: 180.00,  categoria: "superflue" },
+    { id: 62, nome: "Cena al ristorante stellato",       importo: 150.00,  categoria: "superflue" },
+    { id: 63, nome: "Videogame AAA al day-one",         importo: 79.99,   categoria: "superflue" },
+    { id: 64, nome: "Profumo di lusso",                  importo: 120.00,  categoria: "superflue" },
+    { id: 65, nome: "Abbonamento palestra non usata",    importo: 49.00,   categoria: "superflue" },
+    { id: 66, nome: "Acquisto in-app (gioco mobile)",    importo: 9.99,    categoria: "superflue" },
+    { id: 67, nome: "T-shirt firmata",                   importo: 95.00,   categoria: "superflue" },
+    { id: 68, nome: "Delivery food in più per settimana", importo: 35.00,  categoria: "superflue" },
+
+    // ── CASA ──
+    { id: 80, nome: "Affitto mensile (monolocale)",      importo: 750.00,  categoria: "casa" },
+    { id: 81, nome: "Affitto mensile (bilocale)",        importo: 1100.00, categoria: "casa" },
+    { id: 82, nome: "Bolletta elettrica mensile",        importo: 85.00,   categoria: "casa" },
+    { id: 83, nome: "Bolletta gas (riscaldamento)",      importo: 120.00,  categoria: "casa" },
+    { id: 84, nome: "Connessione internet (fibra)",      importo: 29.90,   categoria: "casa" },
+    { id: 85, nome: "Pulizie domestiche (2 volte/sett.)", importo: 180.00, categoria: "casa" },
+    { id: 86, nome: "Mantenere un'auto in città",        importo: 450.00,  categoria: "casa" },
+    { id: 87, nome: "Spesa alimentare settimanale",      importo: 110.00,  categoria: "casa" },
+    { id: 88, nome: "Condominio mensile",                importo: 95.00,   categoria: "casa" },
+
+    // ── SALUTE ──
+    { id: 100, nome: "Abbonamento palestra annuale",     importo: 540.00,  categoria: "salute" },
+    { id: 101, nome: "Visita specialistica privata",     importo: 120.00,  categoria: "salute" },
+    { id: 102, nome: "Seduta dallo psicologo",           importo: 80.00,   categoria: "salute" },
+    { id: 103, nome: "Farmaci da banco (mese)",          importo: 30.00,   categoria: "salute" },
+    { id: 104, nome: "Integratori proteici (mese)",      importo: 45.00,   categoria: "salute" },
+    { id: 105, nome: "Seduta di fisioterapia",           importo: 60.00,   categoria: "salute" },
+    { id: 106, nome: "Occhiali da vista nuovi",          importo: 250.00,  categoria: "salute" },
+    { id: 107, nome: "App meditazione (annuale)",        importo: 79.99,   categoria: "salute" },
+];
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     STRUTTURA HTML
+     ═══════════════════════════════════════════════════ -->
+<div id="app" class="flex-1 flex flex-col w-full h-full pt-safe">
+
+    <!-- SCHERMATA 1: HOME / CATEGORIE -->
+    <section id="screen-1" class="flex-1 flex flex-col px-5 pt-8 pb-24 overflow-y-auto w-full max-w-md mx-auto">
+        <header class="mb-7">
+            <p class="text-xs font-semibold uppercase tracking-widest text-teal mb-1">Budget Focus</p>
+            <h1 class="font-display text-4xl text-ink leading-tight">Preferiresti?</span></h1>
+            <p class="text-gray-400 mt-2 text-sm">Scegli una categoria per iniziare il confronto.</p>
+        </header>
+        <div id="category-list" class="flex flex-col gap-3"></div>
+    </section>
+
+    <!-- SCHERMATA 2: GIOCA -->
+    <section id="screen-2" class="hidden-screen flex-1 flex flex-col px-5 pt-6 pb-24 w-full max-w-md mx-auto h-full">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <p id="cat-label" class="text-xs font-semibold uppercase tracking-widest text-gray-400">Categoria</p>
+                <p id="round-counter" class="text-xs text-gray-300 mt-0.5">Round 1</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="btn-focus-mode" title="Modalità Focus" class="text-gray-300 hover:text-teal transition-colors p-1.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+                <button id="btn-skip" title="Salta" class="text-gray-300 hover:text-yellow-500 transition-colors p-1.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="text-center mb-6">
+            <h2 class="font-display text-2xl text-ink leading-snug">Preferiresti?</h2>
+        </div>
+
+        <!-- Carta A -->
+        <div class="card-wrap mb-3 w-full" id="card-a-wrap">
+            <div class="card-inner relative">
+                <div class="card-front">
+                    <button id="btn-a" class="choice-btn w-full min-h-[130px] bg-teal rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, white, transparent 60%)"></div>
+                        <span id="name-a" class="text-xl font-semibold text-center leading-snug z-10"></span>
+                        <span id="price-a" class="text-sm font-mono opacity-70 mt-2 z-10"></span>
+                        <button id="save-a" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors p-1.5 z-20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                        </button>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divisore -->
+        <div class="flex items-center justify-center my-1">
+            <span class="bg-gray-100 text-gray-400 text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-full font-bold">oppure</span>
+        </div>
+
+        <!-- Carta B -->
+        <div class="card-wrap mt-3 w-full" id="card-b-wrap">
+            <div class="card-inner relative">
+                <div class="card-front">
+                    <button id="btn-b" class="choice-btn w-full min-h-[130px] bg-teal-light rounded-[1.75rem] text-white flex flex-col items-center justify-center px-7 py-6 shadow-lg shadow-teal/20 relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 20% 80%, white, transparent 60%)"></div>
+                        <span id="name-b" class="text-xl font-semibold text-center leading-snug z-10"></span>
+                        <span id="price-b" class="text-sm font-mono opacity-70 mt-2 z-10"></span>
+                        <button id="save-b" class="absolute top-4 right-4 text-white/40 hover:text-white transition-colors p-1.5 z-20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                        </button>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress rounds -->
+        <div class="flex justify-center gap-1.5 mt-6">
+            <div id="round-dots" class="flex gap-1.5"></div>
+        </div>
+    </section>
+
+    <!-- SCHERMATA 3: CLASSIFICA -->
+    <section id="screen-3" class="hidden-screen flex-1 flex flex-col w-full max-w-md mx-auto h-full overflow-hidden">
+        <div class="px-5 pt-6 pb-2">
+            <header class="flex justify-between items-center mb-5">
+                <h2 class="font-display text-3xl text-ink">Classifica</h2>
+                <div class="flex items-center gap-1">
+                    <span class="inline-block w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                    <span class="text-[10px] text-gray-400 font-medium">live</span>
+                </div>
+            </header>
+            <!-- Segmented control categoria -->
+            <div class="flex gap-1.5 overflow-x-auto pb-1 mb-4 no-scrollbar" id="rank-cat-tabs"></div>
+            <!-- Search -->
+            <div class="relative mb-1">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input id="rank-search" type="text" placeholder="Cerca una spesa…" class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal placeholder:text-gray-300 shadow-sm">
+            </div>
+        </div>
+        <div id="rank-list" class="flex-1 overflow-y-auto px-5 pb-28 pt-1 flex flex-col gap-2"></div>
+    </section>
+
+    <!-- SCHERMATA 4: PROFILO / EXTRA -->
+    <section id="screen-4" class="hidden-screen flex-1 flex flex-col px-5 pt-8 pb-28 overflow-y-auto w-full max-w-md mx-auto">
+        <header class="mb-7">
+            <h2 class="font-display text-4xl text-ink leading-tight">Il tuo <span class="text-teal">Profilo</span></h2>
+        </header>
+        <div class="flex flex-col gap-4">
+            <!-- Profilo -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-teal-pale rounded-full flex items-center justify-center text-teal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-ink">Tester Anonimo</h3>
+                        <p class="text-xs text-gray-400 font-mono" id="user-id">ID: #—</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <select id="sel-age" class="flex-1 bg-gray-50 border border-gray-100 text-ink text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal appearance-none">
+                        <option value="" disabled selected>Fascia d'età</option>
+                        <option>18 – 24</option><option>25 – 34</option><option>35 – 44</option><option>45+</option>
+                    </select>
+                    <select id="sel-income" class="flex-1 bg-gray-50 border border-gray-100 text-ink text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal appearance-none">
+                        <option value="" disabled selected>Reddito</option>
+                        <option>&lt; 1.500 €</option><option>1.500 – 3.000 €</option><option>&gt; 3.000 €</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Salvati -->
+            <button id="btn-saved" class="w-full bg-teal p-5 rounded-2xl flex items-center justify-between hover:bg-teal-light active:scale-95 transition-all group">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    <div class="text-left">
+                        <p class="text-sm font-semibold text-white">Preferiti salvati</p>
+                        <p id="saved-count" class="text-xs text-white/60 mt-0.5">0 spese nei preferiti</p>
+                    </div>
+                </div>
+                <svg class="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+
+            <!-- Statistiche partita -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 class="text-sm font-semibold text-ink mb-3">Le tue statistiche</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="text-center bg-gray-50 rounded-xl py-3">
+                        <p id="stat-rounds" class="text-2xl font-display text-teal">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Confronti</p>
+                    </div>
+                    <div class="text-center bg-gray-50 rounded-xl py-3">
+                        <p id="stat-saved" class="text-2xl font-display text-teal">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Salvati</p>
+                    </div>
+                    <div class="text-center bg-gray-50 rounded-xl py-3">
+                        <p id="stat-streak" class="text-2xl font-display text-teal">0</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Streak 🔥</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 class="text-sm font-semibold text-ink mb-1">Feedback Tester</h3>
+                <p class="text-xs text-gray-400 mb-3">Segnala un bug o proponi una nuova spesa.</p>
+                <textarea id="feedback-text" rows="3" placeholder="Scrivi qui…" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal transition-all placeholder:text-gray-300 mb-3 resize-none"></textarea>
+                <button id="btn-feedback" class="w-full bg-ink text-white text-sm font-medium py-3 rounded-xl hover:bg-black active:scale-95 transition-all">Invia Feedback</button>
+            </div>
+
+            <!-- Impostazioni -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 flex items-center justify-between border-b border-gray-50">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        <span class="text-sm font-medium text-ink">Mostra prezzi</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-prices" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal"></div>
+                    </label>
+                </div>
+                <button id="btn-reset" class="w-full px-5 py-4 flex items-center gap-3 hover:bg-red-50 transition-colors group">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span class="text-sm font-medium text-red-500">Azzera i miei dati</span>
+                </button>
+            </div>
+
+            <p class="text-center text-[10px] text-gray-300 font-mono mt-2">Budget Focus • v0.2.0 Beta</p>
+        </div>
+    </section>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="border-t border-gray-100 bg-white/95 backdrop-blur-md fixed bottom-0 w-full pb-safe z-40 h-16 flex justify-around items-start pt-2 px-4">
+    <button onclick="navigateTo('screen-1')" class="nav-btn active flex flex-col items-center w-16 text-teal transition-colors" data-screen="1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-[9px] font-semibold tracking-wide mt-0.5">Focus</span>
+    </button>
+    <button onclick="navigateTo('screen-2')" class="nav-btn flex flex-col items-center w-16 text-gray-400 hover:text-gray-600 transition-colors" data-screen="2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-[9px] font-semibold tracking-wide mt-0.5">Gioca</span>
+    </button>
+    <button onclick="navigateTo('screen-3')" class="nav-btn flex flex-col items-center w-16 text-gray-400 hover:text-gray-600 transition-colors" data-screen="3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span class="text-[9px] font-semibold tracking-wide mt-0.5">Rank</span>
+    </button>
+    <button onclick="navigateTo('screen-4')" class="nav-btn flex flex-col items-center w-16 text-gray-400 hover:text-gray-600 transition-colors" data-screen="4">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span class="text-[9px] font-semibold tracking-wide mt-0.5">Extra</span>
+    </button>
+</nav>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-ink text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none whitespace-nowrap"></div>
+
+<!-- FOCUS MODE OVERLAY -->
+<div id="focus-overlay" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center px-8">
+    <p class="text-white/40 text-xs uppercase tracking-widest mb-6">Modalità Focus</p>
+    <div class="flex flex-col gap-4 w-full max-w-xs">
+        <button id="focus-btn-a" class="choice-btn w-full py-8 bg-white/10 border border-white/20 rounded-[1.75rem] text-white text-lg font-semibold text-center leading-snug px-6 hover:bg-white/20 transition-colors"></button>
+        <div class="text-center text-white/30 text-xs uppercase tracking-widest">oppure</div>
+        <button id="focus-btn-b" class="choice-btn w-full py-8 bg-white/10 border border-white/20 rounded-[1.75rem] text-white text-lg font-semibold text-center leading-snug px-6 hover:bg-white/20 transition-colors"></button>
+    </div>
+    <button id="focus-close" class="mt-10 text-white/30 hover:text-white text-sm transition-colors">✕ Chiudi</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LOGICA APPLICAZIONE
+     ═══════════════════════════════════════════════════ -->
+<script>
+// ── Stato ──────────────────────────────────────────────
+const state = {
+    currentCat: null,        // categoria attiva nel gioco
+    pool: [],                // spese filtrate per categoria
+    usedPairs: new Set(),    // coppie già mostrate
+    currentA: null,
+    currentB: null,
+    scores: {},              // { id: punteggio ELO }
+    saved: new Set(),        // id spese salvate
+    rounds: 0,
+    streak: 0,
+    rankCat: 'all',
+    showPrices: true,
+    rankSearch: '',
+    userId: '#' + Math.floor(1000 + Math.random() * 9000),
+};
+
+// ── Init ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Carica dati da localStorage
+    loadState();
+
+    document.getElementById('user-id').textContent = 'ID: ' + state.userId;
+    buildCategoryList();
+    buildRankCatTabs();
+    updateRank();
+    updateProfileStats();
+
+    // Event listeners
+    document.getElementById('btn-a').addEventListener('click', () => choose('a'));
+    document.getElementById('btn-b').addEventListener('click', () => choose('b'));
+    document.getElementById('btn-skip').addEventListener('click', () => nextPair(false));
+    document.getElementById('save-a').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentA); });
+    document.getElementById('save-b').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentB); });
+    document.getElementById('btn-focus-mode').addEventListener('click', openFocusMode);
+    document.getElementById('focus-close').addEventListener('click', closeFocusMode);
+    document.getElementById('focus-btn-a').addEventListener('click', () => { choose('a'); closeFocusMode(); });
+    document.getElementById('focus-btn-b').addEventListener('click', () => { choose('b'); closeFocusMode(); });
+    document.getElementById('btn-feedback').addEventListener('click', sendFeedback);
+    document.getElementById('btn-reset').addEventListener('click', resetData);
+    document.getElementById('toggle-prices').addEventListener('change', e => {
+        state.showPrices = e.target.checked;
+        renderCurrentPair();
+        saveState();
+    });
+    document.getElementById('rank-search').addEventListener('input', e => {
+        state.rankSearch = e.target.value.toLowerCase();
+        updateRank();
+    });
+    document.getElementById('btn-saved').addEventListener('click', () => {
+        navigateTo('screen-3');
+        state.rankCat = 'saved';
+        document.querySelectorAll('.rank-tab').forEach(t => {
+            t.className = t.dataset.cat === 'saved'
+                ? 'rank-tab seg-active text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap transition-all'
+                : 'rank-tab seg-inactive text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap transition-all';
+        });
+        updateRank();
+    });
+});
+
+// ── Costruzione UI dinamica ────────────────────────────
+function buildCategoryList() {
+    const container = document.getElementById('category-list');
+    container.innerHTML = '';
+    CATEGORIE.forEach(cat => {
+        const count = SPESE.filter(s => s.categoria === cat.id).length;
+        const btn = document.createElement('button');
+        btn.onclick = () => startGame(cat.id);
+        btn.className = 'w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between hover:border-teal/30 active:scale-95 transition-all text-left group screen-enter';
+        btn.innerHTML = `
+            <div class="flex items-center gap-4">
+                <span class="text-2xl w-10 h-10 bg-teal-pale rounded-xl flex items-center justify-center">${cat.emoji}</span>
+                <div>
+                    <h3 class="text-base font-semibold text-ink group-hover:text-teal transition-colors">${cat.nome}</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">${cat.descrizione}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-gray-300">${count} voci</span>
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>`;
+        container.appendChild(btn);
+    });
+}
+
+function buildRankCatTabs() {
+    const container = document.getElementById('rank-cat-tabs');
+    const tabs = [{ id: 'all', nome: 'Tutte' }, { id: 'saved', nome: '⭐ Salvate' }, ...CATEGORIE];
+    container.innerHTML = '';
+    tabs.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.dataset.cat = cat.id;
+        btn.className = `rank-tab ${cat.id === 'all' ? 'seg-active' : 'seg-inactive'} text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap transition-all`;
+        btn.textContent = cat.emoji ? `${cat.emoji} ${cat.nome}` : cat.nome;
+        btn.addEventListener('click', () => {
+            state.rankCat = cat.id;
+            document.querySelectorAll('.rank-tab').forEach(t => t.className = `rank-tab seg-inactive text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap transition-all`);
+            btn.className = 'rank-tab seg-active text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap transition-all';
+            updateRank();
+        });
+        container.appendChild(btn);
+    });
+}
+
+// ── Gioco ──────────────────────────────────────────────
+function startGame(catId) {
+    state.currentCat = catId;
+    state.pool = SPESE.filter(s => s.categoria === catId);
+    state.usedPairs = new Set();
+
+    // Inizializza punteggi ELO per spese non ancora valorizzate
+    state.pool.forEach(s => {
+        if (!(s.id in state.scores)) state.scores[s.id] = 1000;
+    });
+
+    const cat = CATEGORIE.find(c => c.id === catId);
+    document.getElementById('cat-label').textContent = `${cat.emoji} ${cat.nome}`;
+
+    navigateTo('screen-2');
+    nextPair(false);
+}
+
+function nextPair(counted) {
+    if (state.pool.length < 2) { showToast('Aggiungi più spese in questa categoria!'); return; }
+
+    // Estrazione casuale, evitando coppie già viste (finché possibile)
+    let a, b, key;
+    let tries = 0;
+    do {
+        const shuffled = [...state.pool].sort(() => Math.random() - 0.5);
+        a = shuffled[0];
+        b = shuffled[1];
+        key = [Math.min(a.id, b.id), Math.max(a.id, b.id)].join('-');
+        tries++;
+    } while (state.usedPairs.has(key) && tries < 30);
+
+    state.usedPairs.add(key);
+    state.currentA = a;
+    state.currentB = b;
+
+    if (counted) {
+        state.rounds++;
+        state.streak++;
+        updateProfileStats();
+        saveState();
+    }
+
+    renderCurrentPair();
+    updateRoundDots();
+}
+
+function renderCurrentPair() {
+    const a = state.currentA;
+    const b = state.currentB;
+    if (!a || !b) return;
+
+    document.getElementById('name-a').textContent = a.nome;
+    document.getElementById('name-b').textContent = b.nome;
+    document.getElementById('price-a').textContent = state.showPrices ? formatPrice(a.importo) : '';
+    document.getElementById('price-b').textContent = state.showPrices ? formatPrice(b.importo) : '';
+
+    // Aggiorna icone salvataggio
+    updateSaveIcon('save-a', a.id);
+    updateSaveIcon('save-b', b.id);
+
+    // Aggiorna focus mode
+    document.getElementById('focus-btn-a').textContent = a.nome;
+    document.getElementById('focus-btn-b').textContent = b.nome;
+}
+
+function choose(which) {
+    const winner = which === 'a' ? state.currentA : state.currentB;
+    const loser  = which === 'a' ? state.currentB : state.currentA;
+
+    // ELO semplificato
+    const K = 32;
+    const Ra = state.scores[winner.id] || 1000;
+    const Rb = state.scores[loser.id]  || 1000;
+    const Ea = 1 / (1 + Math.pow(10, (Rb - Ra) / 400));
+    state.scores[winner.id] = Math.round(Ra + K * (1 - Ea));
+    state.scores[loser.id]  = Math.round(Rb + K * (0 - (1 - Ea)));
+
+    // Animazione veloce
+    const winBtn = document.getElementById(`btn-${which}`);
+    winBtn.style.transform = 'scale(1.04)';
+    setTimeout(() => { winBtn.style.transform = ''; }, 200);
+
+    updateRank();
+    nextPair(true);
+}
+
+function updateRoundDots() {
+    const max = 8;
+    const container = document.getElementById('round-dots');
+    container.innerHTML = '';
+    for (let i = 0; i < max; i++) {
+        const dot = document.createElement('div');
+        const filled = i < (state.rounds % max);
+        dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${filled ? 'bg-teal' : 'bg-gray-200'}`;
+        container.appendChild(dot);
+    }
+    document.getElementById('round-counter').textContent = `${state.rounds} confronti totali`;
+}
+
+// ── Classifica ─────────────────────────────────────────
+function updateRank() {
+    let items = SPESE.filter(s => {
+        if (state.rankCat === 'all') return true;
+        if (state.rankCat === 'saved') return state.saved.has(s.id);
+        return s.categoria === state.rankCat;
+    });
+
+    if (state.rankSearch) {
+        items = items.filter(s => s.nome.toLowerCase().includes(state.rankSearch));
+    }
+
+    // Ordina per punteggio ELO (decrescente)
+    items.sort((a, b) => (state.scores[b.id] || 1000) - (state.scores[a.id] || 1000));
+
+    const maxScore = items.length > 0 ? (state.scores[items[0].id] || 1000) : 1000;
+    const minScore = 800;
+
+    const container = document.getElementById('rank-list');
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-300 text-sm mt-12">Nessuna spesa trovata.</div>`;
+        return;
+    }
+
+    items.forEach((item, idx) => {
+        const score = state.scores[item.id] || 1000;
+        const pct = Math.max(5, Math.round(((score - minScore) / (maxScore - minScore + 1)) * 100));
+        const isSaved = state.saved.has(item.id);
+        const cat = CATEGORIE.find(c => c.id === item.categoria);
+
+        const row = document.createElement('div');
+        row.className = 'flex flex-col p-3.5 bg-white rounded-2xl border border-gray-50 shadow-sm';
+        row.innerHTML = `
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-lg font-display text-gray-200 w-7 text-center leading-none">${idx + 1}</span>
+                <button class="save-row-btn ${isSaved ? 'text-teal' : 'text-gray-200'} hover:text-teal transition-colors p-1" data-id="${item.id}">
+                    <svg class="w-4 h-4 ${isSaved ? 'fill-current' : ''}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                </button>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-ink leading-tight truncate">${item.nome}</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">${cat ? cat.emoji + ' ' + cat.nome : ''} · ${formatPrice(item.importo)}</p>
+                </div>
+                <span class="font-mono text-xs font-bold text-teal ml-2">${score}</span>
+            </div>
+            <div class="ml-9 bg-gray-100 rounded-full h-1 overflow-hidden">
+                <div class="rank-bar bg-teal h-full rounded-full" style="width: ${pct}%"></div>
+            </div>`;
+
+        row.querySelector('.save-row-btn').addEventListener('click', (e) => {
+            toggleSave(item);
+            updateRank();
+        });
+        container.appendChild(row);
+    });
+}
+
+// ── Salvataggio preferiti ──────────────────────────────
+function toggleSave(item) {
+    if (!item) return;
+    if (state.saved.has(item.id)) {
+        state.saved.delete(item.id);
+        showToast('Rimosso dai preferiti');
+    } else {
+        state.saved.add(item.id);
+        showToast('⭐ Salvato!');
+    }
+    updateSaveIcon('save-a', state.currentA?.id);
+    updateSaveIcon('save-b', state.currentB?.id);
+    updateProfileStats();
+    saveState();
+}
+
+function updateSaveIcon(btnId, itemId) {
+    const btn = document.getElementById(btnId);
+    if (!btn || !itemId) return;
+    const isSaved = state.saved.has(itemId);
+    btn.querySelector('svg').setAttribute('fill', isSaved ? 'currentColor' : 'none');
+    btn.classList.toggle('text-white', true);
+    btn.style.opacity = isSaved ? '1' : '0.4';
+}
+
+// ── Focus mode ─────────────────────────────────────────
+function openFocusMode() {
+    document.getElementById('focus-overlay').classList.remove('hidden');
+}
+function closeFocusMode() {
+    document.getElementById('focus-overlay').classList.add('hidden');
+}
+
+// ── Navigazione ────────────────────────────────────────
+function navigateTo(screenId) {
+    document.querySelectorAll('section[id^="screen-"]').forEach(s => s.classList.add('hidden-screen'));
+    const target = document.getElementById(screenId);
+    if (target) {
+        target.classList.remove('hidden-screen');
+        target.classList.add('screen-enter');
+        setTimeout(() => target.classList.remove('screen-enter'), 350);
+    }
+
+    const idx = parseInt(screenId.split('-')[1]) - 1;
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        if (i === idx) {
+            btn.classList.add('active', 'text-teal');
+            btn.classList.remove('text-gray-400');
+        } else {
+            btn.classList.remove('active', 'text-teal');
+            btn.classList.add('text-gray-400');
+        }
+    });
+
+    if (screenId === 'screen-3') updateRank();
+    if (screenId === 'screen-4') updateProfileStats();
+}
+
+// ── Helpers ────────────────────────────────────────────
+function formatPrice(n) {
+    return n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = '1';
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => {
+        t.style.opacity = '0';
+    }, 2000);
+}
+
+function updateProfileStats() {
+    document.getElementById('stat-rounds').textContent = state.rounds;
+    document.getElementById('stat-saved').textContent  = state.saved.size;
+    document.getElementById('stat-streak').textContent = state.streak;
+    document.getElementById('saved-count').textContent = `${state.saved.size} spese nei preferiti`;
+}
+
+function sendFeedback() {
+    const text = document.getElementById('feedback-text').value.trim();
+    if (!text) { showToast('Scrivi un messaggio prima!'); return; }
+    showToast('✓ Feedback inviato!');
+    document.getElementById('feedback-text').value = '';
+}
+
+function resetData() {
+    if (!confirm('Sei sicuro? Perderai tutti i punteggi.')) return;
+    state.scores = {};
+    state.saved  = new Set();
+    state.rounds = 0;
+    state.streak = 0;
+    saveState();
+    updateRank();
+    updateProfileStats();
+    showToast('Dati azzerati.');
+}
+
+// ── Persistenza localStorage ───────────────────────────
+function saveState() {
+    try {
+        localStorage.setItem('bf_scores',  JSON.stringify(state.scores));
+        localStorage.setItem('bf_saved',   JSON.stringify([...state.saved]));
+        localStorage.setItem('bf_rounds',  state.rounds);
+        localStorage.setItem('bf_streak',  state.streak);
+        localStorage.setItem('bf_userid',  state.userId);
+        localStorage.setItem('bf_prices',  state.showPrices);
+    } catch(e) {}
+}
+
+function loadState() {
+    try {
+        const sc = localStorage.getItem('bf_scores');  if (sc) state.scores = JSON.parse(sc);
+        const sv = localStorage.getItem('bf_saved');   if (sv) state.saved  = new Set(JSON.parse(sv));
+        const ro = localStorage.getItem('bf_rounds');  if (ro) state.rounds = parseInt(ro);
+        const st = localStorage.getItem('bf_streak');  if (st) state.streak = parseInt(st);
+        const ui = localStorage.getItem('bf_userid');  if (ui) state.userId = ui;
+        const pr = localStorage.getItem('bf_prices');
+        if (pr !== null) {
+            state.showPrices = pr === 'true';
+            document.getElementById('toggle-prices').checked = state.showPrices;
+        }
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
