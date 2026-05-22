@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateRank();
     updateProfileStats();
 
-    // Event listeners per il gioco (Overlay)
+    // ── EVENT LISTENERS CORRETTI PER IL NUOVO OVERLAY ──
     document.getElementById('focus-btn-a').addEventListener('click', () => choose('a'));
     document.getElementById('focus-btn-b').addEventListener('click', () => choose('b'));
     document.getElementById('btn-skip-focus').addEventListener('click', () => { state.streak = 0; nextPair(false); });
@@ -69,7 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('game-overlay').classList.add('hidden');
     });
     
-    // Preferiti nell'overlay
     document.getElementById('save-a-focus').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentA); });
     document.getElementById('save-b-focus').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentB); });
 
@@ -104,7 +103,6 @@ function buildCategoryList() {
         const count = SPESE.filter(s => s.categoria === cat.id).length;
         const btn = document.createElement('button');
         btn.onclick = () => startGame(cat.id);
-        // Stile aggiornato con animazioni hover e badge interattivo
         btn.className = 'cat-card w-full bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between transition-all text-left group screen-enter relative overflow-hidden';
         btn.innerHTML = `
             <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-teal-pale to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -175,7 +173,6 @@ function startGame(catId) {
     const cat = CATEGORIE.find(c => c.id === catId);
     document.getElementById('overlay-cat-name').textContent = cat.nome;
     
-    // Mostra l'overlay del gioco
     document.getElementById('game-overlay').classList.remove('hidden');
     nextPair(false);
 }
@@ -209,6 +206,7 @@ function renderCurrentPair() {
     const a = state.currentA;
     const b = state.currentB;
     if (!a || !b) return;
+    
     document.getElementById('focus-btn-a').textContent = a.nome;
     document.getElementById('focus-btn-b').textContent = b.nome;
     updateSaveIcon('save-a-focus', a.id);
@@ -221,7 +219,6 @@ async function choose(which) {
     const loser  = which === 'a' ? state.currentB : state.currentA;
     if (!winner || !loser) return;
 
-    // Aggiungi vibrazione nativa se supportata dal telefono
     if (navigator.vibrate) navigator.vibrate(40);
 
     const K = 32;
@@ -244,7 +241,6 @@ async function choose(which) {
     const winBtn = document.getElementById(`focus-btn-${which}`);
     winBtn.classList.add('win-flash');
     
-    // Piccolo delay per far vedere l'animazione del bottone prima di cambiare carta
     setTimeout(() => {
         winBtn.classList.remove('win-flash');
         if (state.rankMode === 'global' || document.getElementById('screen-3').classList.contains('hidden-screen') === false) {
@@ -360,8 +356,7 @@ function navigateTo(screenId) {
         setTimeout(() => target.classList.remove('screen-enter'), 350);
     }
     
-    // Aggiorna l'icona attiva nella barra in basso
-    const targetIndex = screenId.split('-')[1]; // prenderà '1', '3' o '4'
+    const targetIndex = screenId.split('-')[1];
     document.querySelectorAll('.nav-btn').forEach(btn => {
         const isActive = btn.dataset.screen === targetIndex;
         btn.classList.toggle('active', isActive);
