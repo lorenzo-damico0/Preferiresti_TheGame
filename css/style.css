@@ -5,15 +5,8 @@ body { font-family: 'DM Sans', sans-serif; }
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
 
-.choice-btn { transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.2s; }
-.choice-btn:active { transform: scale(0.96); box-shadow: 0 2px 8px -2px rgba(0,0,0,0.3); }
-
-/* Animazioni Card Home */
-.cat-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.cat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(15,76,92,0.15); border-color: rgba(15,76,92,0.3); }
-.cat-card:active { transform: scale(0.98); }
-.cat-play-icon { opacity: 0; transform: translateX(-10px); transition: all 0.3s ease; }
-.cat-card:hover .cat-play-icon { opacity: 1; transform: translateX(0); }
+.choice-btn { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.choice-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px -2px rgba(15,76,92,0.3); }
 
 .screen-enter { animation: slideUp 0.28s cubic-bezier(.4,0,.2,1) forwards; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -25,14 +18,20 @@ body { font-family: 'DM Sans', sans-serif; }
 .seg-active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: var(--ink); }
 .seg-inactive { color: #9ca3af; }
 ::-webkit-scrollbar { width: 0; }
-
-/* Overlay Gioco (Ex Focus Mode) */
-#game-overlay { background: rgba(15,76,92,0.98); backdrop-filter: blur(12px); transition: opacity 0.3s ease; }
+#focus-overlay { background: rgba(15,76,92,0.97); backdrop-filter: blur(10px); }
 
 /* winner flash */
-@keyframes winFlash { 0% { transform: scale(1); background-color: rgba(255,255,255,0.25); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes winFlash { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
 .win-flash { animation: winFlash 0.3s ease; }
 
+/* global rank badge */
+.global-badge { background: linear-gradient(135deg, #f59e0b, #f97316); }
+
+/* skeleton loader */
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 8px; }
+
+/* delta badges */
 .delta-up { color: #10b981; }
 .delta-down { color: #ef4444; }
 .delta-new { color: #8b5cf6; }
