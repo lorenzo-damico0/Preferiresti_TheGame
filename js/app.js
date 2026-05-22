@@ -17,39 +17,27 @@ const state = {
     prevRankSnapshot: {},
 };
 
-// --- COLLEGAMENTO A SUPABASE ---
-// (Ricordati di inserire i tuoi dati qui quando sarai pronto)
-const supabaseUrl = 'INCOLLA_QUI_IL_TUO_URL';
-const supabaseKey = 'INCOLLA_QUI_LA_TUA_CHIAVE';
-let supabase = null; 
-if (window.supabase && supabaseUrl !== 'INCOLLA_QUI_IL_TUO_URL') {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-}
+const GLOBAL_KEY = 'budget_focus_global_v1';
 
 async function loadGlobalScores() {
-    if (!supabase) return;
     try {
-        const { data, error } = await supabase.from('global_scores').select('*');
-        if (data) {
-            state.globalScores = {};
-            state.globalVotes = {};
-            data.forEach(row => {
-                state.globalScores[row.item_id] = row.score;
-                state.globalVotes[row.item_id] = row.votes;
-            });
+        const result = await window.storage.get(GLOBAL_KEY, true);
+        if (result && result.value) {
+            const data = JSON.parse(result.value);
+            state.globalScores = data.scores || {};
+            state.globalVotes  = data.votes  || {};
         }
-    } catch(e) { console.error("Errore Supabase:", e); }
+    } catch(e) {
+        state.globalScores = {};
+        state.globalVotes  = {};
+    }
 }
 
 async function saveGlobalScores() {
-    if (!supabase) return;
     try {
-        const updates = [
-            { item_id: state.currentA.id, score: state.globalScores[state.currentA.id], votes: state.globalVotes[state.currentA.id] },
-            { item_id: state.currentB.id, score: state.globalScores[state.currentB.id], votes: state.globalVotes[state.currentB.id] }
-        ];
-        await supabase.from('global_scores').upsert(updates);
-    } catch(e) { console.error("Errore salvataggio Supabase:", e); }
+        const data = { scores: state.globalScores, votes: state.globalVotes };
+        await window.storage.set(GLOBAL_KEY, JSON.stringify(data), true);
+    } catch(e) {}
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -61,18 +49,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateRank();
     updateProfileStats();
 
-    // ── EVENT LISTENERS CORRETTI PER IL NUOVO OVERLAY ──
-    document.getElementById('focus-btn-a').addEventListener('click', () => choose('a'));
-    document.getElementById('focus-btn-b').addEventListener('click', () => choose('b'));
-    document.getElementById('btn-skip-focus').addEventListener('click', () => { state.streak = 0; nextPair(false); });
-    document.getElementById('btn-close-game').addEventListener('click', () => {
-        document.getElementById('game-overlay').classList.add('hidden');
-    });
-    
-    document.getElementById('save-a-focus').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentA); });
-    document.getElementById('save-b-focus').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentB); });
+    document.getElementById('btn-a').addEventListener('click', (e) => { e.stopPropagation(); choose('a'); });
+    document.getElementById('btn-b').addEventListener('click', (e) => { e.stopPropagation(); choose('b'); });
+    document.getElementById('btn-skip').addEventListener('click', () => { state.streak = 0; nextPair(false); showToast('Saltato — streak azzerato'); });
+    document.getElementById('save-a').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentA); });
+    document.getElementById('save-b').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(state.currentB); });
 
-    // Switch Classifica
+    document.getElementById('btn-focus-mode').addEventListener('click', openFocusMode);
+    document.getElementById('focus-close').addEventListener('click', closeFocusMode);
+    document.getElementById('focus-btn-a').addEventListener('click', () => { closeFocusMode(); choose('a'); });
+    document.getElementById('focus-btn-b').addEventListener('click', () => { closeFocusMode(); choose('b'); });
+
     document.getElementById('btn-rank-local').addEventListener('click', () => setRankMode('local'));
     document.getElementById('btn-rank-global').addEventListener('click', async () => {
         await loadGlobalScores();
@@ -84,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateRank();
     });
 
-    // Eventi Profilo
     document.getElementById('btn-feedback').addEventListener('click', sendFeedback);
     document.getElementById('btn-reset').addEventListener('click', resetData);
     document.getElementById('btn-saved').addEventListener('click', () => {
@@ -95,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// --- UI Home ---
 function buildCategoryList() {
     const container = document.getElementById('category-list');
     container.innerHTML = '';
@@ -103,20 +88,18 @@ function buildCategoryList() {
         const count = SPESE.filter(s => s.categoria === cat.id).length;
         const btn = document.createElement('button');
         btn.onclick = () => startGame(cat.id);
-        btn.className = 'cat-card w-full bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between transition-all text-left group screen-enter relative overflow-hidden';
+        btn.className = 'w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between hover:border-teal/30 active:scale-95 transition-all text-left group screen-enter';
         btn.innerHTML = `
-            <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-teal-pale to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex items-center gap-4 relative z-10">
-                <span class="text-3xl w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center shadow-inner">${cat.emoji}</span>
+            <div class="flex items-center gap-4">
+                <span class="text-2xl w-10 h-10 bg-teal-pale rounded-xl flex items-center justify-center">${cat.emoji}</span>
                 <div>
-                    <h3 class="text-lg font-semibold text-ink group-hover:text-teal transition-colors">${cat.nome}</h3>
+                    <h3 class="text-base font-semibold text-ink group-hover:text-teal transition-colors">${cat.nome}</h3>
                     <p class="text-xs text-gray-400 mt-0.5">${cat.descrizione}</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 relative z-10">
-                <span class="cat-play-icon text-xs font-bold text-teal tracking-wide uppercase bg-white px-2 py-1 rounded-md shadow-sm">Gioca</span>
-                <span class="text-[10px] font-mono text-gray-300 group-hover:hidden">${count} voci</span>
-                <svg class="w-5 h-5 text-gray-300 group-hover:text-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-gray-300">${count} voci</span>
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-teal transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </div>`;
         container.appendChild(btn);
     });
@@ -163,22 +146,19 @@ function setRankMode(mode) {
     updateRank();
 }
 
-// --- LOGICA GIOCO ---
 function startGame(catId) {
     state.currentCat = catId;
     state.pool = SPESE.filter(s => s.categoria === catId);
     state.usedPairs = new Set();
     state.pool.forEach(s => { if (!(s.id in state.localScores)) state.localScores[s.id] = 1000; });
-    
     const cat = CATEGORIE.find(c => c.id === catId);
-    document.getElementById('overlay-cat-name').textContent = cat.nome;
-    
-    document.getElementById('game-overlay').classList.remove('hidden');
+    document.getElementById('cat-label').textContent = `${cat.emoji} ${cat.nome}`;
+    navigateTo('screen-2');
     nextPair(false);
 }
 
 function nextPair(counted) {
-    if (state.pool.length < 2) { showToast('Non ci sono abbastanza spese!'); return; }
+    if (state.pool.length < 2) { showToast('Non ci sono abbastanza spese in questa fascia!'); return; }
     let a, b, key, tries = 0;
     do {
         const shuffled = [...state.pool].sort(() => Math.random() - 0.5);
@@ -200,26 +180,26 @@ function nextPair(counted) {
         saveLocalState();
     }
     renderCurrentPair();
+    updateRoundDots();
 }
 
 function renderCurrentPair() {
     const a = state.currentA;
     const b = state.currentB;
     if (!a || !b) return;
-    
+    document.getElementById('name-a').textContent = a.nome;
+    document.getElementById('name-b').textContent = b.nome;
+    updateSaveIcon('save-a', a.id);
+    updateSaveIcon('save-b', b.id);
     document.getElementById('focus-btn-a').textContent = a.nome;
     document.getElementById('focus-btn-b').textContent = b.nome;
-    updateSaveIcon('save-a-focus', a.id);
-    updateSaveIcon('save-b-focus', b.id);
-    document.getElementById('overlay-round').textContent = `${state.rounds} confronti totali`;
+    document.getElementById('round-counter').textContent = `${state.rounds} confronti totali`;
 }
 
 async function choose(which) {
     const winner = which === 'a' ? state.currentA : state.currentB;
     const loser  = which === 'a' ? state.currentB : state.currentA;
     if (!winner || !loser) return;
-
-    if (navigator.vibrate) navigator.vibrate(40);
 
     const K = 32;
     const RaL = state.localScores[winner.id] || 1000;
@@ -238,16 +218,26 @@ async function choose(which) {
 
     saveGlobalScores();
 
-    const winBtn = document.getElementById(`focus-btn-${which}`);
+    const winBtn = document.getElementById(`btn-${which}`);
     winBtn.classList.add('win-flash');
-    
-    setTimeout(() => {
-        winBtn.classList.remove('win-flash');
-        if (state.rankMode === 'global' || document.getElementById('screen-3').classList.contains('hidden-screen') === false) {
-            updateRank();
-        }
-        nextPair(true);
-    }, 280);
+    setTimeout(() => winBtn.classList.remove('win-flash'), 300);
+
+    if (state.rankMode === 'global' || document.getElementById('screen-3').classList.contains('hidden-screen') === false) {
+        updateRank();
+    }
+    nextPair(true);
+}
+
+function updateRoundDots() {
+    const max = 8;
+    const container = document.getElementById('round-dots');
+    container.innerHTML = '';
+    for (let i = 0; i < max; i++) {
+        const filled = i < (state.rounds % max);
+        const dot = document.createElement('div');
+        dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${filled ? 'bg-teal' : 'bg-gray-200'}`;
+        container.appendChild(dot);
+    }
 }
 
 function updateRank() {
@@ -259,7 +249,9 @@ function updateRank() {
         return s.categoria === state.rankCat;
     });
 
-    if (state.rankSearch) items = items.filter(s => s.nome.toLowerCase().includes(state.rankSearch));
+    if (state.rankSearch) {
+        items = items.filter(s => s.nome.toLowerCase().includes(state.rankSearch));
+    }
 
     items.sort((a, b) => (scores[b.id] || 1000) - (scores[a.id] || 1000));
     const container = document.getElementById('rank-list');
@@ -298,7 +290,7 @@ function updateRank() {
                 <span class="text-base font-display ${medal ? 'text-base' : 'text-gray-200'} w-7 text-center leading-none">
                     ${medal || (idx + 1)}
                 </span>
-                <button class="save-row-btn ${isSaved ? 'text-teal' : 'text-gray-200'} hover:text-teal transition-colors p-1" data-id="${item.id}">
+                <button class="save-row-btn ${isSaved ? 'text-teal' : 'text-gray-200'} hover:text-teal transition-colors p-1" data-id="${item.id}" aria-label="Salva preferito">
                     <svg class="w-4 h-4 ${isSaved ? 'fill-current' : ''}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
                 </button>
                 <div class="flex-1 min-w-0">
@@ -332,8 +324,8 @@ function toggleSave(item) {
         state.saved.add(item.id);
         showToast('⭐ Salvato!');
     }
-    updateSaveIcon('save-a-focus', state.currentA?.id);
-    updateSaveIcon('save-b-focus', state.currentB?.id);
+    updateSaveIcon('save-a', state.currentA?.id);
+    updateSaveIcon('save-b', state.currentB?.id);
     updateProfileStats();
     saveLocalState();
 }
@@ -347,6 +339,14 @@ function updateSaveIcon(btnId, itemId) {
     btn.style.opacity = isSaved ? '1' : '0.4';
 }
 
+function openFocusMode() {
+    if (!state.currentA || !state.currentB) { showToast('Scegli prima una categoria!'); return; }
+    document.getElementById('focus-overlay').classList.remove('hidden');
+}
+function closeFocusMode() {
+    document.getElementById('focus-overlay').classList.add('hidden');
+}
+
 function navigateTo(screenId) {
     document.querySelectorAll('section[id^="screen-"]').forEach(s => s.classList.add('hidden-screen'));
     const target = document.getElementById(screenId);
@@ -355,15 +355,12 @@ function navigateTo(screenId) {
         target.classList.add('screen-enter');
         setTimeout(() => target.classList.remove('screen-enter'), 350);
     }
-    
-    const targetIndex = screenId.split('-')[1];
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        const isActive = btn.dataset.screen === targetIndex;
-        btn.classList.toggle('active', isActive);
-        btn.classList.toggle('text-teal', isActive);
-        btn.classList.toggle('text-gray-400', !isActive);
+    const idx = parseInt(screenId.split('-')[1]) - 1;
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx);
+        btn.classList.toggle('text-teal', i === idx);
+        btn.classList.toggle('text-gray-400', i !== idx);
     });
-    
     if (screenId === 'screen-3') updateRank();
     if (screenId === 'screen-4') updateProfileStats();
 }
