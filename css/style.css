@@ -18,6 +18,8 @@ body { font-family: 'DM Sans', sans-serif; }
 .seg-active { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: var(--ink); }
 .seg-inactive { color: #9ca3af; }
 ::-webkit-scrollbar { width: 0; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 #focus-overlay { background: rgba(15,76,92,0.97); backdrop-filter: blur(10px); }
 
 /* winner flash */
@@ -35,3 +37,6 @@ body { font-family: 'DM Sans', sans-serif; }
 .delta-up { color: #10b981; }
 .delta-down { color: #ef4444; }
 .delta-new { color: #8b5cf6; }
+
+/* onboarding hero entrance */
+#screen-0 { animation: slideUp 0.4s cubic-bezier(.4,0,.2,1) forwards; }
