@@ -8,23 +8,23 @@ const CATEGORIE = [
 
 const LISTE_SPESE = {
     "fascia_5": [
-        "Un caffè espresso","Un cornetto o brioche","Una bottiglietta d'acqua (0,5 L)","Un trancio di pizza al taglio",
-        "Una lattina di bibita","Un pacchetto di gomme da masticare","Un gelato artigianale (coppetta)","Un pacchetto di patatine",
-        "Una birra in bottiglia (supermercato)","Un caffè al ginseng","Un chilo di pasta","Una bottiglia di passata di pomodoro",
-        "Un filone di pane fresco","Una scatola di biscotti","Un litro di latte","Un pezzo di parmigiano (piccolo)",
-        "Due vasetti di yogurt","Una tavoletta di cioccolato","Un cespo di insalata fresca","Una confezione da 6 uova",
-        "Un flacone di bagnoschiuma","Un tubetto di dentifricio","Uno spazzolino da denti","Una saponetta solida",
-        "Un pacco scorta di fazzoletti","Un deodorante spray","Una maschera viso monouso","Un burrocacao",
-        "Una confezione di cotton fioc","Un pacco di salviettine umidificate","Una penna a sfera","Un quaderno a spirale",
-        "Un set matita e gomma","Un evidenziatore","Un blocchetto di post-it","Una cartellina portadocumenti",
-        "Un rotolo di nastro adesivo","Una mini-spillatrice","Una scatolina di graffette","Un temperamatite",
-        "Una confezione di spugne per piatti","Un detersivo per piatti","Un rotolo di carta assorbente","Un rotolo di sacchetti per immondizia",
-        "Un panno in microfibra","Una candela profumata piccola","Un deodorante per ambienti","Un pacco di mollette per i panni",
-        "Una confezione di fiammiferi","Una bottiglia di candeggina","Un mese di cloud base (50GB)","Noleggio digitale di un film",
-        "Acquisto di una canzone digitale","Download di un'app a pagamento","Commissione per un bonifico","Stampa di 10 fotografie",
-        "Un caffè sospeso (donazione)","Abbonamento mensile news premium","Attivazione di una SIM in promo","Micro-transazione in un videogioco",
+        "Un caffè espresso","Un cornetto o brioche","Una bottiglietta d'acqua (0,5 L)","Un trancio di pizza al taglio da Bonci",
+        "Una lattina di bibita","Un pacchetto di chewing-gum","Un gelato artigianale da Rivareno","Un pacchetto di patatine San Carlo",
+        "Una birra congelata in bottiglia al Todis","Un caffè al ginseng","Un chilo di pasta (cruda)","Una bottiglia di passata di pomodoro",
+        "Un filone di pane fresco","Una scatola di biscotti (Gocciole)","Un litro di latte parzialmente scremato","Un pezzo di parmigiano (piccolo)",
+        "Due Yomino","Una tavoletta di cioccolato (99% fondente)","Un cespo di insalata fresca","Una confezione da 6 uova allevate a terra",
+        "Un flacone di bagnoschiuma Vidal","Un tubetto di dentifricio Marvis","Uno spazzolino da denti usato","Una saponetta solida a forma di cuore",
+        "Un pacco scorta di fazzolettini profumati","Un deodorante spray (24h)","Una maschera viso monouso","Un burrocacao Carmex al ragù",
+        "Una confezione di cotton fioc","Un pacco di salviettine intime umidificate","Una penna a sfera Pilot","Un quaderno a spirale",
+        "Un set matita e gomma (senza penna)","Un evidenziatore blu","Un blocchetto di post-it gialli","Una cartellina portadocumenti",
+        "Un rotolo di nastro adesivo","Una mini-spillatrice","Una scatolina di graffette","Un temperamatite di Iron-Man",
+        "Una confezione di spugne per piatti","Un detersivo per piatti al limone","Un rotolo di carta assorbente (Scottex)","Un rotolo di sacchetti per immondizia (bio)",
+        "Un panno in (10^-6)fibra","Una candela profumata piccola","Un deodorante per ambienti","Un pacco di mollette per i panni o altro",
+        "Una confezione di fiammiferi da decoro","Una bottiglia di candeggina","Un mese di cloud base (50GB)","Noleggio digitale di un film per adulti",
+        "Acquisto di una canzone trap/jazz digitale","Download di un'app a pagamento (Preferiresti)","Commissione per un bonifico","Stampa di 10 fotografie",
+        "Un caffè sospeso (donazione)","Abbonamento mensile news premium","Attivazione di una SIM in promo","Micro-transazione in un videogioco (V-Bucks, ecc.)",
         "Un biglietto dell'autobus","Un'ora di parcheggio (strisce blu)","Sblocco di un monopattino in sharing","Biglietto del treno (tratta breve)",
-        "Due litri di benzina","Pedaggio autostradale (tratta breve)","Un gettone autolavaggio self-service","Un profumatore per l'auto",
+        "Due litri di benzina (non da bere)","Pedaggio autostradale (tratta breve)","Un gettone autolavaggio self-service","Un profumatore per l'auto",
         "Canone mensile base del Telepass","Una mappa cartacea della città","Un paio di calzini in cotone","Una confezione di forcine",
         "Un elastico per capelli (scrunchie)","Un paio di lacci per scarpe","Una borsa shopper in tela","Delle solette semplici per scarpe",
         "Un pettine in plastica","Una confezione di spille da balia","Un pacco di guanti usa e getta","Una toppa termoadesiva",
@@ -35,28 +35,29 @@ const LISTE_SPESE = {
         "Un laccio portachiavi da collo","Una calamita da frigorifero","Cartine e filtri per tabacco","Un portachiavi ad anello semplice"
     ],
     "fascia_50": [
-        "Un abbonamento mensile a Netflix (Premium)","Una bottiglia di vino di buona qualità","Due pizze a domicilio con birra",
-        "Un power bank ad alta capacità","Un biglietto per il cinema 3D","Un mese di palestra (offerta base)",
-        "Un taglio di capelli dal barbiere/parrucchiere","Un libro bestseller in copertina rigida","Una maglietta di marca in saldo",
-        "Una cover per smartphone resistente","Scorta mensile di caffè in capsule","Un ombrello pieghevole antivento",
-        "Una crema viso idratante in farmacia","Un bouquet di fiori freschi","Un biglietto del treno (tratta media)",
-        "Abbonamento mensile ai mezzi pubblici","Un set di calici da vino","Un gioco da tavolo compatto",
-        "Una borraccia termica in acciaio","Un caricabatterie rapido originale","Una visita guidata in un museo",
-        "Un flacone di integratori vitaminici (mese)","Un cuscino ergonomico in memory foam","Una pianta da interni (es. Monstera)",
-        "Un set di padelle antiaderenti base","Un mouse wireless di buona marca","Una chiavetta USB da 128GB",
-        "Un ingresso alle terme (solo piscina)","Un pranzo di lavoro al ristorante","Una custodia imbottita per laptop",
-        "Un abbonamento mensile a Spotify Duo","Un mazzo di carte collezionabili (Pokémon/Magic)","Una sveglia digitale con ricarica wireless",
-        "Un portafoglio in pelle sintetica","Un set di asciugamani in spugna","Una lampada da scrivania a LED",
-        "Un coltello da cucina professionale","Un supporto smartphone per l'auto","Una caffettiera Moka Bialetti",
-        "Un costume da bagno","Un cappello invernale in lana","Una cintura di pelle",
-        "Un set di pennelli da trucco","Una cassa Bluetooth portatile","Un ingresso in discoteca con consumazione",
-        "Una maxi scorta di detersivi","Un rasoio manuale con testine di ricambio","Un abbonamento annuale a una rivista",
-        "Un set di candele profumate grandi","Una donazione a un'associazione benefica"
+        "Un abbonamento mensile a Netflix (Premium, senza pubblicità)","Una bottiglia di vino di buona qualità","Due pizze a domicilio con birra",
+        "Un power bank ad alta capacità","Un biglietto per il cinema 3D (Avatar)","Un mese di palestra (con sauna)",
+        "Un taglio di capelli dal barbiere/parrucchiere","Un libro bestseller in copertina rigida","Una maglietta di marca in saldo","Un libro Fasano-Marmi(usato)",
+        "Una cover per smartphone resistente, con assicurazione","Scorta mensile di caffè in capsule(Nespresso)","Un ombrello indistruttibile antivento",
+        "Un bouquet di fiori freschi (rose, tulipani, ecc.)","Un biglietto del treno Roma-Bari","Un biglietto del treno Roma-Lecce",
+        "Abbonamento mensile ai mezzi pubblici","Un set di calici da vino","Un gioco da tavolo a piacere",
+        "Una borraccia termica in acciaio (inox)","Un caricabatterie rapido originale (Samsung)","Un caricabatterie rapido originale (Apple)",
+        "Una visita guidata in un museo", 
+        "Un flacone di integratori vitaminici","Un cuscino ergonomico in memory foam","Una pianta da interni",
+        "Un set di padelle antiaderenti base","Un mouse wireless di buona marca","Una chiavetta USB da 1GB",
+        "Un ingresso alle terme (solo piscina)","Un pranzo di lavoro al kebabaro","Una custodia imbottita per laptop",
+        "Un abbonamento mensile a Spotify Duo","Un mazzo di carte collezionabili (Pokémon, Magic, ecc.)",
+        "Un portafoglio in pelle fiorentina sintetica","Una lampada da scrivania a LED",
+        "Un coltello da cucina professionale","Una caffettiera Moka Bialetti",
+        "Un costume da bagno con le papere","Un cappello invernale in lana con le papere",
+        "Un set di pennelli da trucco (Gucci)","Una cassa Bluetooth portatile","Un ingresso in discoteca con consumazione (Gin Tonic, Acqua, ecc.)",
+        "Una maxi scorta di detersivi Coccolino","Un abbonamento annuale ad un Magazine",
+        "Un set di candele profumate enormi","Una donazione a un'associazione benefica (UNICEF, RUI, ecc.)"
     ],
     "fascia_200": [
         "La bolletta della luce bimestrale","Un biglietto per il concerto del tuo artista preferito","Un paio di scarpe da ginnastica di tendenza",
-        "Una seduta di igiene dentale","Un volo andata e ritorno per una capitale europea","Una giacca a vento impermeabile",
-        "Un profumo di alta profumeria","Una cena di coppia in un bel ristorante","L'abbonamento annuale ad Amazon Prime",
+        "Una seduta di igiene dentale","Un volo andata e ritorno per una capitale europea (Parigi, Riga, ecc.)","Una giacca a vento impermeabile",
+        "Un profumo di alta profumeria","Una cena di coppia in un bel ristorante","Multimetro digitale Fluke (corrente, resistenze, ecc.)",
         "Un e-reader (es. Kindle)","Un paio di auricolari wireless di marca","Il tagliando base dell'auto",
         "Una macchina del caffè a capsule","Un paio di jeans firmati","Una notte in un B&B con colazione",
         "Un ingresso in una Spa per due persone","Uno zaino o borsa a tracolla di marca","Uno smartwatch entry-level",
@@ -70,7 +71,7 @@ const LISTE_SPESE = {
         "Una fornitura semestrale di lenti a contatto","Un passeggino leggero","Una tenda da campeggio",
         "Un tappeto grande per il salotto","Una scrivania per il PC","Un forno a microonde",
         "Una cena sushi 'All You Can Eat' per 4","Un set di pentole in acciaio inox","Un'assicurazione viaggio annuale",
-        "Un abbonamento a teatro (4 spettacoli)","Il pagamento di una multa stradale"
+        "Un abbonamento a teatro (4 spettacoli)","Il pagamento di una multa stradale", "Mototrivella(ricondizionata)"
     ],
     "fascia_1000": [
         "L'assicurazione annuale dell'auto (RCA)","Un weekend a Londra o Parigi (volo + hotel)","Un nuovo smartphone di fascia medio-alta",
@@ -89,7 +90,7 @@ const LISTE_SPESE = {
         "Un intervento del dentista (devitalizzazione)","Un corso per diventare sommelier","Una macchina da caffè espresso manuale",
         "Un box doccia nuovo in cristallo","Un tapis roulant pieghevole","Una chitarra acustica di liuteria",
         "La prima rata delle tasse universitarie","Il traghetto con auto per la Sardegna/Sicilia","Un set di mobili da giardino",
-        "Un pacchetto di 10 sedute dal fisioterapista","Una spesa medica veterinaria imprevista"
+        "Un pacchetto di 10 sedute dal fisioterapista","Una spesa medica veterinaria imprevista","Mototrivella(perfettamente funzionante)"
     ],
     "fascia_max": [
         "L'affitto mensile di un trilocale in città","Una vacanza di due settimane alle Maldive","L'acquisto di un'utilitaria usata",
@@ -108,7 +109,8 @@ const LISTE_SPESE = {
         "Un sistema audio hi-fi per audiofili","Un pianoforte a mezza coda","Una stampante 3D professionale",
         "L'acquisto di un pacchetto di azioni/fondi","Un safari fotografico in Africa","Un viaggio in Giappone di 15 giorni per due",
         "Attrezzatura da palestra professionale completa","Un armadio a muro su misura","La parcella dell'avvocato per una causa civile",
-        "Un macchinario per l'epilazione laser professionale","La sostituzione completa del pavimento di casa"
+        "Un macchinario per l'epilazione laser professionale","La sostituzione completa del pavimento di casa","Ferrari Purosangue nuova di zecca",
+        "Robot umanoide casalingo","Yacht da 12 metri","Barca a vela (full-optional)"
     ]
 };
 
